@@ -40,7 +40,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/HotsHom/react-native-storage-access.git"
+    "url": "git@github.com:HotsHom/react-native-storage-access.git"
   },
   "author": "Hotshom <hotshomwork@gmail.com> (https://github.com/HotsHom)",
   "license": "MIT",
