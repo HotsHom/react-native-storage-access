@@ -2,6 +2,7 @@ package com.storageaccess
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
@@ -139,14 +140,12 @@ class ExternalStorageAccess(private val context: Context) {
 
   fun getSubdirectoryUri(baseUri: String, subdirectory: String, context: ReactApplicationContext, promise: Promise) {
     try {
-      val parentDocument = DocumentFile.fromTreeUri(context, Uri.parse(baseUri))
-      val subdirectoryDocument = parentDocument?.findFile(subdirectory)
+      val baseUriObj = Uri.parse(baseUri)
+      val documentId = DocumentsContract.getTreeDocumentId(baseUriObj)
+      val newDocumentId = "$documentId/$subdirectory"
+      val newUri = DocumentsContract.buildDocumentUriUsingTree(baseUriObj, newDocumentId)
 
-      if (subdirectoryDocument != null && subdirectoryDocument.exists()) {
-        promise.resolve(subdirectoryDocument.uri.toString())
-      } else {
-        promise.reject("Directory Not Found", "Subdirectory not found")
-      }
+      promise.resolve(newUri.toString())
     } catch (e: Exception) {
       promise.reject("Error", e.localizedMessage)
     }

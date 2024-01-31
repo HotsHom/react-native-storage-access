@@ -205,10 +205,9 @@ export function getAppDirectorySync(): string {
 
 /**
  * Получает URI поддиректории в выбранной пользователем директории.
- * @deprecated Больше не используется!
  * @param {string} baseUri URI базовой директории.
  * @param {string} subdirectory Название поддиректории.
- * @return {Promise<string>} Промис, возвращающий URI поддиректории.
+ * @return {Promise<string>} Промис, возвращающий URI поддиректории. Внимание! Данная директория или файл может не сущесвовать!.
  */
 export async function getSubdirectoryUri(
   baseUri: string,
