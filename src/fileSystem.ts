@@ -41,9 +41,9 @@ export async function requestPermission(): Promise<void> {
 /**
  * Позволяет получить тип текущего URI.
  * @param {string | null} uriOrNull - URI string. Может быть null, в этом случае берётся путь из метода getAppDirectorySync().
- * @return {string} Тип текущего URI: 'external', 'internal', 'unknown'.
+ * @return {Promise<string>} Промис, возвращающий тип текущего URI: 'external', 'internal', 'unknown'.
  */
-export function getStorageType(uriOrNull: string | null): string {
+export async function getStorageType(uriOrNull: string | null): Promise<string> {
   try {
     return StorageAccess.getStorageType(uriOrNull);
   } catch (error) {
@@ -51,6 +51,7 @@ export function getStorageType(uriOrNull: string | null): string {
     throw new Error(`Error getting storage type: ${errorMessage}`);
   }
 }
+
 
 /**
  * Читает содержимое файла по указанному пути.

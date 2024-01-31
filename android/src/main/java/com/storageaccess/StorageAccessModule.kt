@@ -50,17 +50,24 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun getStorageType(uriOrNull: String?): String {
-    val uriString = uriOrNull ?: getAppDirectorySync()
-    ?: throw IllegalArgumentException("Uri string and App directory both can't be null or empty")
+  fun getStorageType(uriOrNull: String?, promise: Promise) {
+    try {
+      val uriString = uriOrNull ?: getAppDirectorySync()
+      ?: throw IllegalArgumentException("Uri string and App directory both can't be null or empty")
 
-    val uri = Uri.parse(uriString)
-    return when {
-      uri.scheme.equals("content", ignoreCase = true) -> "external"
-      uri.path?.startsWith("/data/") == true -> "internal"
-      else -> "unknown"
+      val uri = Uri.parse(uriString)
+      val storageType = when {
+        uri.scheme.equals("content", ignoreCase = true) -> "external"
+        uri.path?.startsWith("/data/") == true -> "internal"
+        else -> "unknown"
+      }
+
+      promise.resolve(storageType)
+    } catch (e: Exception) {
+      promise.reject("Error", e.localizedMessage)
     }
   }
+
 
   @ReactMethod
   fun setPermissionType(type: String) {
