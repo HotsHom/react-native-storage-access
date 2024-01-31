@@ -1,6 +1,6 @@
 # react-native-storage-access
 
-Library for work with device storages
+Library for work with device storages for only Android!
 
 ## Installation
 
@@ -11,11 +11,11 @@ npm install react-native-storage-access
 ## Usage
 
 ```js
-import { multiply } from 'react-native-storage-access';
+import StorageAccess from 'react-native-storage-access';
 
 // ...
 
-const result = await multiply(3, 7);
+StorageAccess.setPermissionType('full');
 ```
 
 ## Contributing
