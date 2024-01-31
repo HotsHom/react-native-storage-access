@@ -1,4 +1,4 @@
-import * as FileSystem from './src/fileSystem';
+import * as FileSystem from './fileSystem';
 
 const StorageAccess = {
   ...FileSystem,

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-storage-access": ["./src/index"]
+      "react-native-storage-access": ["./index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
