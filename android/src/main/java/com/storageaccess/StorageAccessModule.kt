@@ -247,15 +247,25 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   fun checkPermissions(promise: Promise) {
     val activity = currentActivity ?: return promise.reject("Activity Error", "Current activity is null.")
 
-    val granted = if (permissionType == "full") {
-      Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager()
-    } else {
-      ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-        ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    val savedUri = sharedPreferences.getString(KEY_SAVED_URI, null)
+    val savedAccessType = sharedPreferences.getString(KEY_ACCESS_TYPE, null)
+
+    val granted = when {
+      savedUri != null && savedAccessType != null -> {
+        true
+      }
+      permissionType == "full" -> {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager()
+      }
+      else -> {
+        ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+          ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+      }
     }
 
     promise.resolve(granted)
   }
+
 
   @ReactMethod
   fun selectDirectory(promise: Promise) {
