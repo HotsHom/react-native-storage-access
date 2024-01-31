@@ -50,7 +50,7 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun getStorageType(uriOrNull: String?, promise: Promise) {
+  fun getStorageType(uriOrNull: String?, promise: Promise? = null): String {
     try {
       val uriString = uriOrNull ?: getAppDirectorySync()
       ?: throw IllegalArgumentException("Uri string and App directory both can't be null or empty")
@@ -62,9 +62,11 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
         else -> "unknown"
       }
 
-      promise.resolve(storageType)
+      promise?.resolve(storageType)
+      return storageType
     } catch (e: Exception) {
-      promise.reject("Error", e.localizedMessage)
+      promise?.reject("Error", e.localizedMessage)
+      return "unknown"
     }
   }
 
