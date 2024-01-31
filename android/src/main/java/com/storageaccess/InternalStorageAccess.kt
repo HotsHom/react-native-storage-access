@@ -50,9 +50,10 @@ class InternalStorageAccess(private val context: Context) {
     promise.resolve(file.exists())
   }
 
-  fun createDirectory(dirPath: String, promise: Promise) {
-    val dir = File(context.filesDir, dirPath)
-    promise.resolve(dir.mkdirs())
+  fun createDirectory(parentDit: String? = null, dirName: String, promise: Promise) {
+    val parent = parentDit ?: context.filesDir.path
+    val dir = File(parent, dirName)
+    promise.resolve(dir.path)
   }
 
   fun deleteDirectory(dirPath: String, promise: Promise) {

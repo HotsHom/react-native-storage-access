@@ -122,10 +122,15 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun createDirectory(dirPath: String, promise: Promise) {
-    when (getStorageType(dirPath)) {
-      "external" -> externalStorageAccess.createDirectory(dirPath, reactApplicationContext, promise)
-      "internal" -> internalStorageAccess.createDirectory(dirPath, promise)
+  fun createDirectory(dirName: String, parentDir: String? = null, promise: Promise) {
+    val parentDir_ = parentDir ?: getAppDirectorySync()
+    if (parentDir_.isNullOrEmpty()) {
+      promise.reject("Error", "Directory not found")
+      return
+    }
+    when (getStorageType(parentDir)) {
+      "external" -> externalStorageAccess.createDirectory(parentDir_, dirName, reactApplicationContext, promise)
+      "internal" -> internalStorageAccess.createDirectory(parentDir, dirName, promise)
       else -> promise.reject("Error", "Unsupported URI type")
     }
   }

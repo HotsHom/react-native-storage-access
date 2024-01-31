@@ -74,15 +74,15 @@ class ExternalStorageAccess(private val context: Context) {
     }
   }
 
-  fun createDirectory(dirPath: String, context: ReactApplicationContext, promise: Promise) {
+  fun createDirectory(dirPath: String, folderName: String, context: ReactApplicationContext, promise: Promise) {
     try {
       val uri = Uri.parse(dirPath)
       val parentDocument = DocumentFile.fromTreeUri(context, uri)
 
       if (parentDocument != null && parentDocument.exists()) {
-        val newDirectory = parentDocument.createDirectory(dirPath)
+        val newDirectory = parentDocument.createDirectory(folderName)
         if (newDirectory != null && newDirectory.exists()) {
-          promise.resolve(null)
+          promise.resolve(newDirectory.uri.toString())
         } else {
           promise.reject("Create Directory Error", "Could not create directory at path '$dirPath'")
         }

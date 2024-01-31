@@ -133,12 +133,16 @@ export async function listFiles(dirPath: string): Promise<FileEntry[]> {
 
 /**
  * Создает новую директорию по указанному пути.
- * @param {string} dirPath Путь к новой директории.
- * @return {Promise<void>} Промис, который выполнится после создания директории.
+ * @param {string} dirName Название новой папки.
+ * @param {string} parentDir Путь к родительской папке, где нужно создать новую папку
+ * @return {Promise<string>} Промис, который выполнится после создания директории, возвращает путь к новой директории.
  */
-export async function createDirectory(dirPath: string): Promise<void> {
+export async function createDirectory(
+  dirName: string,
+  parentDir?: string
+): Promise<string> {
   try {
-    await StorageAccess.createDirectory(dirPath);
+    return await StorageAccess.createDirectory(dirName, parentDir ?? null);
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw new Error(`Error creating directory: ${errorMessage}`);
@@ -201,6 +205,7 @@ export function getAppDirectorySync(): string {
 
 /**
  * Получает URI поддиректории в выбранной пользователем директории.
+ * @deprecated Больше не используется!
  * @param {string} baseUri URI базовой директории.
  * @param {string} subdirectory Название поддиректории.
  * @return {Promise<string>} Промис, возвращающий URI поддиректории.
