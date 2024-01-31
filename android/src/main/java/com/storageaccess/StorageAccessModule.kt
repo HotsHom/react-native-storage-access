@@ -49,7 +49,11 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
     const val NAME = "StorageAccess"
   }
 
-  private fun getStorageType(uriString: String): String {
+  @ReactMethod
+  fun getStorageType(uriOrNull: String?): String {
+    val uriString = uriOrNull ?: getAppDirectorySync()
+    ?: throw IllegalArgumentException("Uri string and App directory both can't be null or empty")
+
     val uri = Uri.parse(uriString)
     return when {
       uri.scheme.equals("content", ignoreCase = true) -> "external"
