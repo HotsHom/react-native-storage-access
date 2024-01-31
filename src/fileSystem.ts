@@ -29,9 +29,9 @@ export function setPermissionType(type: 'full' | 'directory') {
  * Запрашивает разрешение на доступ к файлам.
  * @return {Promise<void>} Промис, который выполнится после получения разрешения.
  */
-export async function requestPermission(): Promise<void> {
+export async function requestPermission(): Promise<string | any> {
   try {
-    await StorageAccess.requestPermission();
+    return await StorageAccess.requestPermission();
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw new Error(`Error requesting permission: ${errorMessage}`);
@@ -43,7 +43,9 @@ export async function requestPermission(): Promise<void> {
  * @param {string | null} uriOrNull - URI string. Может быть null, в этом случае берётся путь из метода getAppDirectorySync().
  * @return {Promise<string>} Промис, возвращающий тип текущего URI: 'external', 'internal', 'unknown'.
  */
-export async function getStorageType(uriOrNull?: string): Promise<string> {
+export async function getStorageType(
+  uriOrNull?: string
+): Promise<'internal' | 'external' | 'unknown'> {
   try {
     return StorageAccess.getStorageType(uriOrNull ?? null);
   } catch (error) {

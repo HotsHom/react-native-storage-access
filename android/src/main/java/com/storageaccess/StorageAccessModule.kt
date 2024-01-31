@@ -148,6 +148,8 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
       return
     }
 
+    permissionsPromise = promise
+
     try {
       when (permissionType) {
         "full" -> {
