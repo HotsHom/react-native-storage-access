@@ -1,4 +1,4 @@
-interface FileEntry {
+export interface FileEntry {
   name: string; // Имя файла или директории
   uri: string; // URI файла или директории
   isDirectory: boolean; // Является ли элемент директорией

@@ -74,16 +74,21 @@ export async function readFile(filePath: string): Promise<string> {
  * @param {string} filename Имя файла
  * @param {string} extension Расширение файла
  * @param {string} content Контент, который будет записан
- * @return {Promise<void>} Промис, который выполнится после записи.
+ * @return {Promise<string>} Промис, который возвращает URI нового файла.
  */
 export async function writeFile(
   rootPath: string,
   filename: string,
   extension: string,
   content: string
-): Promise<void> {
+): Promise<string> {
   try {
-    await StorageAccess.writeFile(rootPath, content, filename, extension);
+    return await StorageAccess.writeFile(
+      rootPath,
+      content,
+      filename,
+      extension
+    );
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw new Error(`Error writing file: ${errorMessage}`);
