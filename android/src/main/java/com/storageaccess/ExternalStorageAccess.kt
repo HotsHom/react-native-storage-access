@@ -121,6 +121,7 @@ class ExternalStorageAccess(private val context: Context) {
       putString("uri", documentFile.uri.toString())
       putBoolean("isDirectory", documentFile.isDirectory)
       putBoolean("isFile", documentFile.isFile)
+      putBoolean("isChildrenLoaded", maxDepth == -1 || currentDepth < maxDepth)
     }
 
     if (documentFile.isDirectory && (maxDepth == -1 || currentDepth < maxDepth)) {
@@ -164,7 +165,6 @@ class ExternalStorageAccess(private val context: Context) {
       promise.reject("List Files Error", e.localizedMessage)
     }
   }
-
 
   fun getSubdirectoryUri(baseUri: String, subdirectory: String, context: ReactApplicationContext, promise: Promise) {
     try {
