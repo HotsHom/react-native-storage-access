@@ -1,6 +1,6 @@
 {
   "name": "react-native-storage-access",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "Library for work with device storages (only for Android)",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
