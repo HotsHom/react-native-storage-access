@@ -4,6 +4,6 @@ const StorageAccess = {
   ...FileSystem,
 };
 
-export type { FileEntry } from './types/FileEntity';
+export type { FileEntity } from './types/FileEntity';
 
 export default StorageAccess;

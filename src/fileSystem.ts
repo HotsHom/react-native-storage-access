@@ -1,5 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
-import type { FileEntry } from './types/FileEntity';
+import type { FileEntity } from './types/FileEntity';
 
 const LINKING_ERROR =
   `The package 'react-native-storage-access' doesn't seem to be linked. Make sure: \n\n` +
@@ -131,13 +131,13 @@ export async function fileExists(filePath: string): Promise<boolean> {
  * @param lazy Включает ленивую загрузку, во время неё загружается первый уровень вложенности и информация о следующем уровне вложенности.
  * @param includeSizeAndCount Включить информацию о размере и количестве элементов.
  *
- * @return {Promise<FileEntry>} Промис, возвращающий объект FileEntry.
+ * @return {Promise<FileEntity>} Промис, возвращающий объект FileEntry.
  */
 export async function listFiles(
   dirPath: string,
   lazy: boolean = false,
   includeSizeAndCount: boolean = false
-): Promise<FileEntry> {
+): Promise<FileEntity> {
   try {
     return await StorageAccess.listFiles(
       dirPath,
