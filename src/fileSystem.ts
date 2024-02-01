@@ -70,19 +70,20 @@ export async function readFile(filePath: string): Promise<string> {
 
 /**
  * Записывает текст в файл по указанному пути.
- * @param {string} filePath Путь к файлу (включая имя файла и его расширение).
- * @param {string} content Содержимое для записи.
+ * @param {string} rootPath Путь, где будет создан файл
+ * @param {string} filename Имя файла
+ * @param {string} extension Расширение файла
+ * @param {string} content Контент, который будет записан
  * @return {Promise<void>} Промис, который выполнится после записи.
  */
 export async function writeFile(
-  filePath: string,
+  rootPath: string,
+  filename: string,
+  extension: string,
   content: string
 ): Promise<void> {
   try {
-    const filename = filePath.split('/').pop()?.split('.').shift() || 'newfile';
-    const extension = filePath.split('.').pop() || 'txt';
-
-    await StorageAccess.writeFile(filePath, content, filename, extension);
+    await StorageAccess.writeFile(rootPath, content, filename, extension);
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw new Error(`Error writing file: ${errorMessage}`);
