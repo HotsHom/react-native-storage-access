@@ -118,13 +118,25 @@ export async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * Перечисляет файлы в указанной директории.
- * @param {string} dirPath - Путь к директории.
- * @return {Promise<FileEntry[]>} Промис, возвращающий массив {@link FileEntry}.
+ * Перечисляет файлы и папки в указанной директории с возможностью контролировать глубину загрузки.
+ *
+ * @param dirPath Путь к директории для перечисления файлов и папок.
+ * @param lazy Включает ленивую загрузку, во время неё загружается первый уровень вложенности и информация о следующем уровне вложенности.
+ * @param includeSizeAndCount Включить информацию о размере и количестве элементов.
+ *
+ * @return {Promise<FileEntry>} Промис, возвращающий объект FileEntry.
  */
-export async function listFiles(dirPath: string): Promise<FileEntry[]> {
+export async function listFiles(
+  dirPath: string,
+  lazy: boolean = false,
+  includeSizeAndCount: boolean = false
+): Promise<FileEntry> {
   try {
-    return await StorageAccess.listFiles(dirPath);
+    return await StorageAccess.listFiles(
+      dirPath,
+      lazy ? 2 : -1,
+      includeSizeAndCount
+    );
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw new Error(`Error listing files: ${errorMessage}`);

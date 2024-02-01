@@ -26,7 +26,7 @@ class InternalStorageAccess(private val context: Context) {
     return try {
       val file = File(context.filesDir, filePath)
       file.writeText(content)
-      promise.resolve(true)
+      promise.resolve(file.path)
     } catch (e: IOException) {
       promise.resolve(false)
     }
@@ -73,7 +73,7 @@ class InternalStorageAccess(private val context: Context) {
         "uri" to Uri.fromFile(file),
         "isDirectory" to file.isDirectory,
         "isFile" to file.isFile,
-        "length" to if (file.isFile) file.length() else 0
+        "size" to if (file.isFile) file.length() else 0
       )
     } ?: emptyList()
     promise.resolve(Arguments.fromList(fileList))

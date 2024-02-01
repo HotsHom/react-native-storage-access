@@ -7,6 +7,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.WritableMap
 
 class ExternalStorageAccess(private val context: Context) {
 
@@ -34,7 +35,7 @@ class ExternalStorageAccess(private val context: Context) {
               writer.write(content)
             }
           }
-          promise.resolve(null)
+          promise.resolve(it.uri.toString())
         } ?: run {
           promise.reject("File Creation Error", "Failed to create file at path '$filePath'")
         }
@@ -114,22 +115,48 @@ class ExternalStorageAccess(private val context: Context) {
     }
   }
 
-  fun listFiles(dirPath: String, context: ReactApplicationContext, promise: Promise) {
+  private fun listFilesRecursive(documentFile: DocumentFile, currentDepth: Int = 0, maxDepth: Int = 2, includeSizeAndCount: Boolean = false): WritableMap {
+    val fileMap = Arguments.createMap().apply {
+      putString("name", documentFile.name ?: "")
+      putString("uri", documentFile.uri.toString())
+      putBoolean("isDirectory", documentFile.isDirectory)
+      putBoolean("isFile", documentFile.isFile)
+    }
+
+    if (documentFile.isDirectory && (maxDepth == -1 || currentDepth < maxDepth)) {
+      val includes = Arguments.createArray()
+      var totalSize = 0L
+      var totalCount = 0
+
+      for (file in documentFile.listFiles()) {
+        if (currentDepth < maxDepth) {
+          val childMap = listFilesRecursive(file, currentDepth + 1, maxDepth, includeSizeAndCount)
+          includes.pushMap(childMap)
+          if (includeSizeAndCount) {
+            totalSize += if (file.isDirectory) childMap.getInt("totalSize").toLong() else file.length()
+            totalCount++
+          }
+        }
+      }
+
+      fileMap.putArray("includes", includes)
+      if (includeSizeAndCount) {
+        fileMap.putInt("totalSize", totalSize.toInt())
+        fileMap.putInt("totalCount", totalCount)
+      }
+    } else {
+      fileMap.putInt("size", documentFile.length().toInt())
+    }
+
+    return fileMap
+  }
+
+  fun listFiles(dirPath: String, maxDepth: Int, includeSizeAndCount: Boolean, promise: Promise) {
     try {
       val uri = Uri.parse(dirPath)
       val documentFile = DocumentFile.fromTreeUri(context, uri)
-
       if (documentFile != null && documentFile.exists()) {
-        val fileList = documentFile.listFiles().map { file ->
-          mapOf(
-            "name" to (file.name ?: ""),
-            "uri" to file.uri.toString(),
-            "isDirectory" to file.isDirectory,
-            "isFile" to file.isFile,
-            "length" to if (file.isFile) file.length() else 0
-          )
-        }
-        promise.resolve(Arguments.fromList(fileList))
+        promise.resolve(listFilesRecursive(documentFile, 0, maxDepth, includeSizeAndCount))
       } else {
         promise.reject("Directory Not Found", "Directory at path '$dirPath' not found")
       }
@@ -137,6 +164,7 @@ class ExternalStorageAccess(private val context: Context) {
       promise.reject("List Files Error", e.localizedMessage)
     }
   }
+
 
   fun getSubdirectoryUri(baseUri: String, subdirectory: String, context: ReactApplicationContext, promise: Promise) {
     try {

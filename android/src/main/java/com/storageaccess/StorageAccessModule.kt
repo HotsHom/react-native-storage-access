@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
@@ -113,9 +114,9 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun listFiles(dirPath: String, promise: Promise) {
+  fun listFiles(dirPath: String, maxDepth: Int = -1, includeSizeAndCount: Boolean = false, promise: Promise) {
     when (getStorageType(dirPath)) {
-      "external" -> externalStorageAccess.listFiles(dirPath, reactApplicationContext, promise)
+      "external" -> externalStorageAccess.listFiles(dirPath, maxDepth, includeSizeAndCount, promise)
       "internal" -> internalStorageAccess.listFiles(dirPath, promise)
       else -> promise.reject("Error", "Unsupported URI type")
     }
@@ -159,13 +160,15 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
       when (permissionType) {
         "full" -> {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-              flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
-                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
-                Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
-            }
-            activity.startActivityForResult(intent, REQUEST_CODE_FULL_ACCESS)
+//            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+//              flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+//                Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+//                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+//                Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+//            }
+//            activity.startActivityForResult(intent, REQUEST_CODE_FULL_ACCESS)
+            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            activity.startActivity(intent)
           } else {
             requestFileAccessPermissions(activity, promise)
           }
