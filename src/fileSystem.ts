@@ -1,4 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
+import type { FileEntry } from './types/FileEntity';
 
 const LINKING_ERROR =
   `The package 'react-native-storage-access' doesn't seem to be linked. Make sure: \n\n` +
