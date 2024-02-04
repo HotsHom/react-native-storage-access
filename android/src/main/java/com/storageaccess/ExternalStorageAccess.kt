@@ -8,16 +8,28 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import android.util.Log
 
 class ExternalStorageAccess(private val context: Context) {
 
+  private val myPluginScope = CoroutineScope(Dispatchers.IO)
+
   fun readFile(uriString: String, promise: Promise) {
-    val uri = Uri.parse(uriString)
-    val documentFile = DocumentFile.fromSingleUri(context, uri)
-    val result = if (documentFile != null && documentFile.exists()) {
-      context.contentResolver.openInputStream(uri)?.bufferedReader().use { it?.readText() }
-    } else null
-    promise.resolve(result)
+    myPluginScope.launch {
+      val uri = Uri.parse(uriString)
+      val documentFile = DocumentFile.fromSingleUri(context, uri)
+      val result = if (documentFile != null && documentFile.exists()) {
+        context.contentResolver.openInputStream(uri)?.bufferedReader().use { it?.readText() }
+      } else null
+      promise.resolve(result)
+    }
   }
 
   fun writeFile(filePath: String, content: String, filename: String, extension: String, context: ReactApplicationContext, promise: Promise) {
@@ -115,54 +127,120 @@ class ExternalStorageAccess(private val context: Context) {
     }
   }
 
-  private fun listFilesRecursive(documentFile: DocumentFile, currentDepth: Int = 0, maxDepth: Int = 2, includeSizeAndCount: Boolean = false): WritableMap {
-    val fileMap = Arguments.createMap().apply {
-      putString("name", documentFile.name ?: "")
-      putString("uri", documentFile.uri.toString())
-      putBoolean("isDirectory", documentFile.isDirectory)
-      putBoolean("isFile", documentFile.isFile)
-      putBoolean("isChildrenLoaded", maxDepth == -1 || currentDepth < maxDepth)
-    }
+  private suspend fun listFilesRecursiveNew(
+    context: Context,
+    documentUri: Uri,
+    currentDepth: Int = 0,
+    maxDepth: Int = 2,
+    includeSizeAndCount: Boolean = false
+  ): WritableMap = coroutineScope {
+    val projection = arrayOf(
+      DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+      DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+      DocumentsContract.Document.COLUMN_SIZE,
+      DocumentsContract.Document.COLUMN_MIME_TYPE
+    )
 
-    if (documentFile.isDirectory && (maxDepth == -1 || currentDepth < maxDepth)) {
-      val includes = Arguments.createArray()
-      var totalSize = 0L
-      var totalCount = 0
+    val fileMap = Arguments.createMap()
 
-      for (file in documentFile.listFiles()) {
-        if (currentDepth < maxDepth) {
-          val childMap = listFilesRecursive(file, currentDepth + 1, maxDepth, includeSizeAndCount)
-          includes.pushMap(childMap)
-          if (includeSizeAndCount) {
-            totalSize += if (file.isDirectory) childMap.getInt("totalSize").toLong() else file.length()
-            totalCount++
+    suspend fun calculateDirectorySize(directoryUri: Uri): Long = coroutineScope {
+      var size = 0L
+      val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(directoryUri, DocumentsContract.getDocumentId(directoryUri))
+      context.contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
+        val sizeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
+        val mimeTypeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
+        val idColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+
+        while (cursor.moveToNext()) {
+          val mimeType = cursor.getString(mimeTypeColumn)
+          val isDirectory = mimeType == DocumentsContract.Document.MIME_TYPE_DIR
+          size += if (isDirectory) {
+            val id = cursor.getString(idColumn)
+            val childUri = DocumentsContract.buildDocumentUriUsingTree(directoryUri, id)
+            val childSize = async(Dispatchers.IO) {
+              calculateDirectorySize(childUri)
+            }.await()
+            childSize
+          } else {
+            val fileSize = cursor.getLong(sizeColumn)
+            fileSize
           }
         }
       }
-
-      fileMap.putArray("includes", includes)
-      if (includeSizeAndCount) {
-        fileMap.putInt("totalSize", totalSize.toInt())
-        fileMap.putInt("totalCount", totalCount)
-      }
-    } else {
-      fileMap.putInt("size", documentFile.length().toInt())
+      size
     }
 
-    return fileMap
+    val totalSize = if (includeSizeAndCount) {
+      calculateDirectorySize(documentUri)
+    } else 0L
+
+    // Сначала обработаем корневую папку
+    context.contentResolver.query(documentUri, projection, null, null, null)?.use { cursor ->
+      if (cursor.moveToFirst()) {
+        val name = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME))
+        fileMap.putString("name", name)
+        fileMap.putString("uri", documentUri.toString())
+        fileMap.putBoolean("isDirectory", true)
+        fileMap.putBoolean("isFile", false)
+      }
+    }
+
+    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(documentUri, DocumentsContract.getDocumentId(documentUri))
+    val includes = Arguments.createArray()
+    var totalCount = 0
+
+    context.contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
+      while (cursor.moveToNext()) {
+        val id = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID))
+        val name = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME))
+        val mimeType = cursor.getString(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE))
+        val isDirectory = mimeType == DocumentsContract.Document.MIME_TYPE_DIR
+        val childUri = DocumentsContract.buildDocumentUriUsingTree(documentUri, id)
+
+        var childSize = 0L
+        if (isDirectory && currentDepth + 1 < maxDepth) {
+          val childResult = async(Dispatchers.IO) {
+            listFilesRecursiveNew(context, childUri, currentDepth + 1, maxDepth, includeSizeAndCount)
+          }.await()
+          includes.pushMap(childResult)
+        } else if (!isDirectory) {
+          childSize = cursor.getLong(cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE))
+        }
+
+        if (currentDepth + 1 == maxDepth || !isDirectory) {
+          val childMap = Arguments.createMap().apply {
+            putString("name", name)
+            putString("uri", childUri.toString())
+            putBoolean("isDirectory", isDirectory)
+            putBoolean("isFile", !isDirectory)
+            putDouble("totalSize", childSize.toDouble())
+            putBoolean("isChildrenLoaded", false)
+          }
+          includes.pushMap(childMap)
+        }
+
+        totalCount++
+      }
+    }
+
+    fileMap.putArray("includes", includes)
+    fileMap.putDouble("totalSize", totalSize.toDouble())
+    fileMap.putInt("totalCount", totalCount)
+    fileMap.putBoolean("isChildrenLoaded", true)
+
+    return@coroutineScope fileMap
   }
 
-  fun listFiles(dirPath: String, maxDepth: Int, includeSizeAndCount: Boolean, promise: Promise) {
-    try {
-      val uri = Uri.parse(dirPath)
-      val documentFile = DocumentFile.fromTreeUri(context, uri)
-      if (documentFile != null && documentFile.exists()) {
-        promise.resolve(listFilesRecursive(documentFile, 0, maxDepth, includeSizeAndCount))
-      } else {
-        promise.reject("Directory Not Found", "Directory at path '$dirPath' not found")
+  fun listFiles(dirPath: String, maxDepth: Int, includeSizeAndCount: Boolean, context: Context, promise: Promise) {
+    myPluginScope.launch {
+      try {
+        val uri = Uri.parse(dirPath)
+        val result = listFilesRecursiveNew(context, uri, 0, maxDepth, includeSizeAndCount)
+        promise.resolve(result)
+      } catch (e: Exception) {
+        e.printStackTrace()
+        promise.reject("List Files Error", e.localizedMessage)
       }
-    } catch (e: Exception) {
-      promise.reject("List Files Error", e.localizedMessage)
     }
   }
 

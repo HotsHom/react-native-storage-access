@@ -116,7 +116,7 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   @ReactMethod
   fun listFiles(dirPath: String, maxDepth: Int = -1, includeSizeAndCount: Boolean = false, promise: Promise) {
     when (getStorageType(dirPath)) {
-      "external" -> externalStorageAccess.listFiles(dirPath, maxDepth, includeSizeAndCount, promise)
+      "external" -> externalStorageAccess.listFiles(dirPath, maxDepth, includeSizeAndCount, reactApplicationContext, promise)
       "internal" -> internalStorageAccess.listFiles(dirPath, promise)
       else -> promise.reject("Error", "Unsupported URI type")
     }
