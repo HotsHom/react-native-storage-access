@@ -97,6 +97,48 @@ export async function writeFile(
 }
 
 /**
+ * Перезаписывает текст в файл по указанному пути.
+ * @param {string} fileUri Путь к файлу
+ * @param {string} content Контент, который будет записан
+ * @return {Promise<string>} Промис, который возвращает URI файла.
+ */
+export async function overwriteFile(
+  fileUri: string,
+  content: string
+): Promise<string> {
+  try {
+    return await StorageAccess.overwriteFile(fileUri, content);
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    throw new Error(`Error writing file: ${errorMessage}`);
+  }
+}
+
+/**
+ * Конвертирует изображение в JPF и копирует по указанному пути
+ * @param {string} sourceUriString Путь к исходному изображению
+ * @param {string} destinationDirUriString Путь к новому расположению файла
+ * @param {string} fileName Имя файла
+ * @return {Promise<string>} Промис, который возвращает URI нового файла.
+ */
+export async function convertToJpgAndCopy(
+  sourceUriString: string,
+  destinationDirUriString: string,
+  fileName: string
+): Promise<string> {
+  try {
+    return await StorageAccess.convertToJpgAndCopy(
+      sourceUriString,
+      destinationDirUriString,
+      fileName
+    );
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    throw new Error(`Error writing file: ${errorMessage}`);
+  }
+}
+
+/**
  * Удаляет файл по указанному пути.
  * @param {string} filePath Путь к файлу.
  * @return {Promise<void>} Промис, который выполнится после удаления файла.

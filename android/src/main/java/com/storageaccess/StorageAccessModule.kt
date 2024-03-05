@@ -96,6 +96,23 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun convertToJpgAndCopy(sourceUriString: String, destinationDirUriString: String, fileName: String, promise: Promise) {
+    when (getStorageType(destinationDirUriString)) {
+      "external" -> externalStorageAccess.convertToJpgAndCopy(sourceUriString, destinationDirUriString, fileName, reactApplicationContext, promise)
+      "internal" -> promise.reject("Error", "Unsupported URI type")
+      else -> promise.reject("Error", "Unsupported URI type")
+    }
+  }
+  @ReactMethod
+  fun overwriteFile(fileUri: String, content: String, promise: Promise) {
+    when (getStorageType(fileUri)) {
+      "external" -> externalStorageAccess.overwriteFile(fileUri, content, reactApplicationContext, promise)
+      "internal" -> promise.reject("Error", "Unsupported URI type")
+      else -> promise.reject("Error", "Unsupported URI type")
+    }
+  }
+
+  @ReactMethod
   fun deleteFile(filePath: String, promise: Promise) {
     when (getStorageType(filePath)) {
       "external" -> externalStorageAccess.deleteFile(filePath, reactApplicationContext, promise)
