@@ -113,6 +113,15 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
+  fun moveDirectory(sourceUriString: String, destinationUriString: String, promise: Promise) {
+    when (getStorageType(sourceUriString)) {
+      "external" -> externalStorageAccess.moveFolder(sourceUriString, destinationUriString, promise)
+      "internal" -> promise.reject("Error", "Unsupported URI type")
+      else -> promise.reject("Error", "Unsupported URI type")
+    }
+  }
+
+  @ReactMethod
   fun deleteFile(filePath: String, promise: Promise) {
     when (getStorageType(filePath)) {
       "external" -> externalStorageAccess.deleteFile(filePath, reactApplicationContext, promise)
@@ -328,6 +337,6 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   override fun onNewIntent(p0: Intent?) {
-    TODO("Not yet implemented")
+
   }
 }
