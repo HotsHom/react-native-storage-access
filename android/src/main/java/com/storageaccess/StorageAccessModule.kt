@@ -336,6 +336,17 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
     }
   }
 
+  @ReactMethod
+  fun clearSharedPreference(promise: Promise) {
+    try {
+      sharedPreferences?.edit()?.clear()?.apply() ?: promise.reject("Error", "SharedPreference is not defined")
+
+      promise.resolve(true)
+    } catch (e: Exception) {
+      promise.reject("Error", e.localizedMessage)
+    }
+  }
+
   override fun onNewIntent(p0: Intent?) {
 
   }

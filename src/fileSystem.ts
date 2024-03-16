@@ -299,4 +299,20 @@ export async function getSubdirectoryUri(
     throw new Error(`Error getting subdirectory URI: ${errorMessage}`);
   }
 }
+
+/**
+ * Clears the shared preferences.
+ *
+ * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether the shared preferences were cleared.
+ */
+export async function clearSharedPreference(): Promise<boolean> {
+  try {
+    return await StorageAccess.clearSharedPreference();
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    throw new Error(`Error cleared SharedPreference: ${errorMessage}`);
+  }
+}
+
+
 export const appDirectory = getAppDirectorySync();
