@@ -113,7 +113,7 @@ class StorageAccessModule(reactContext: ReactApplicationContext) :
   }
 
   @ReactMethod
-  fun moveDirectory(sourceUriString: String, destinationUriString: String, promise: Promise) {
+  fun moveDirectoryOrFile(sourceUriString: String, destinationUriString: String, promise: Promise) {
     when (getStorageType(sourceUriString)) {
       "external" -> externalStorageAccess.moveFolder(sourceUriString, destinationUriString, promise)
       "internal" -> promise.reject("Error", "Unsupported URI type")

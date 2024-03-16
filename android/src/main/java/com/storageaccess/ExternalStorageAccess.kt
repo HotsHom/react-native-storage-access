@@ -146,23 +146,32 @@ class ExternalStorageAccess(private val context: Context) {
     }
   }
 
-  fun moveFolder(sourceUriString: String, destinationUriString: String, promise: Promise) {
+  fun moveItem(sourceUriString: String, destinationUriString: String, promise: Promise) {
     myPluginScope.launch {
       try {
         val sourceUri = Uri.parse(sourceUriString)
         val destinationUri = Uri.parse(destinationUriString)
-        val sourceDocument = DocumentFile.fromTreeUri(context, sourceUri)
+        val sourceDocument = DocumentFile.fromSingleUri(context, sourceUri)
         val destinationDocument = DocumentFile.fromTreeUri(context, destinationUri)
 
-        if (sourceDocument != null && sourceDocument.isDirectory && destinationDocument != null && destinationDocument.isDirectory) {
-          copyFolderRecursively(sourceDocument, destinationDocument)
-          sourceDocument.delete()
-          promise.resolve("Folder moved successfully")
+        if (sourceDocument != null && destinationDocument != null && destinationDocument.isDirectory) {
+          if (sourceDocument.isFile) {
+            // Копирование файла
+            moveFile(sourceDocument, destinationDocument)
+          } else if (sourceDocument.isDirectory) {
+            // Копирование папки
+            val newFolder = destinationDocument.createDirectory(sourceDocument.name ?: "NewFolder")
+            newFolder?.let {
+              copyFolderRecursively(sourceDocument, it)
+            }
+            sourceDocument.delete()
+          }
+          promise.resolve("Item moved successfully")
         } else {
-          promise.reject("Move Folder Error", "Either source or destination is not valid")
+          promise.reject("Move Item Error", "Either source or destination is not valid")
         }
       } catch (e: Exception) {
-        promise.reject("Move Folder Error", e.localizedMessage)
+        promise.reject("Move Item Error", e.localizedMessage)
       }
     }
   }
@@ -175,16 +184,21 @@ class ExternalStorageAccess(private val context: Context) {
           copyFolderRecursively(file, it)
         }
       } else {
-        val newFile = destination.createFile(file.type ?: "application/octet-stream", file.name ?: "NewFile")
-        newFile?.let { destFile ->
-          context.contentResolver.openInputStream(file.uri).use { inputStream ->
-            context.contentResolver.openOutputStream(destFile.uri).use { outputStream ->
-              inputStream?.copyTo(outputStream ?: return)
-            }
-          }
+        moveFile(file, destination)
+      }
+    }
+  }
+
+  private fun moveFile(file: DocumentFile, destination: DocumentFile) {
+    val newFile = destination.createFile(file.type ?: "application/octet-stream", file.name ?: "NewFile")
+    newFile?.let { destFile ->
+      context.contentResolver.openInputStream(file.uri).use { inputStream ->
+        context.contentResolver.openOutputStream(destFile.uri).use { outputStream ->
+          inputStream?.copyTo(outputStream ?: return)
         }
       }
     }
+    file.delete()
   }
 
   fun deleteFile(filePath: String, context: ReactApplicationContext, promise: Promise) {

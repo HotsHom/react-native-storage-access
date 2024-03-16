@@ -144,12 +144,15 @@ export async function convertToJpgAndCopy(
  * @param {string} destinationDirUriString Путь к новому расположению папки
  * @return {Promise<void>} Промис
  */
-export async function moveDirectory(
+export async function moveDirectoryOrFile(
   sourceUriString: string,
   destinationDirUriString: string
 ): Promise<void> {
   try {
-    await StorageAccess.moveDirectory(sourceUriString, destinationDirUriString);
+    await StorageAccess.moveDirectoryOrFile(
+      sourceUriString,
+      destinationDirUriString
+    );
   } catch (error) {
     const errorMessage = (error as Error).message;
     throw new Error(`Error writing file: ${errorMessage}`);
@@ -313,6 +316,5 @@ export async function clearSharedPreference(): Promise<boolean> {
     throw new Error(`Error cleared SharedPreference: ${errorMessage}`);
   }
 }
-
 
 export const appDirectory = getAppDirectorySync();
