@@ -146,12 +146,12 @@ class ExternalStorageAccess(private val context: Context) {
     }
   }
 
-  fun moveItem(sourceUriString: String, destinationUriString: String, promise: Promise) {
+  fun moveItem(sourceUriString: String, destinationUriString: String, deleteSource: Boolean = true, promise: Promise) {
     myPluginScope.launch {
       try {
         val sourceUri = Uri.parse(sourceUriString)
         val destinationUri = Uri.parse(destinationUriString)
-        val sourceDocument = DocumentFile.fromSingleUri(context, sourceUri)
+        val sourceDocument = DocumentFile.fromTreeUri(context, sourceUri)
         val destinationDocument = DocumentFile.fromTreeUri(context, destinationUri)
 
         if (sourceDocument != null && destinationDocument != null && destinationDocument.isDirectory) {
@@ -164,7 +164,8 @@ class ExternalStorageAccess(private val context: Context) {
             newFolder?.let {
               copyFolderRecursively(sourceDocument, it)
             }
-            sourceDocument.delete()
+            if (deleteSource)
+              sourceDocument.delete()
           }
           promise.resolve("Item moved successfully")
         } else {
@@ -189,7 +190,7 @@ class ExternalStorageAccess(private val context: Context) {
     }
   }
 
-  private fun moveFile(file: DocumentFile, destination: DocumentFile) {
+  private fun moveFile(file: DocumentFile, destination: DocumentFile, deleteSource: Boolean = true) {
     val newFile = destination.createFile(file.type ?: "application/octet-stream", file.name ?: "NewFile")
     newFile?.let { destFile ->
       context.contentResolver.openInputStream(file.uri).use { inputStream ->
@@ -198,7 +199,8 @@ class ExternalStorageAccess(private val context: Context) {
         }
       }
     }
-    file.delete()
+    if (deleteSource)
+      file.delete()
   }
 
   fun deleteFile(filePath: String, context: ReactApplicationContext, promise: Promise) {

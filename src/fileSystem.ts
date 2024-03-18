@@ -142,16 +142,19 @@ export async function convertToJpgAndCopy(
  * Перемещает папку по указанному пути
  * @param {string} sourceUriString Путь к исходной папке
  * @param {string} destinationDirUriString Путь к новому расположению папки
+ * @param deleteSource True - удаляет исходные файлы
  * @return {Promise<void>} Промис
  */
 export async function moveDirectoryOrFile(
   sourceUriString: string,
-  destinationDirUriString: string
+  destinationDirUriString: string,
+  deleteSource: boolean = true
 ): Promise<void> {
   try {
     await StorageAccess.moveDirectoryOrFile(
       sourceUriString,
-      destinationDirUriString
+      destinationDirUriString,
+      deleteSource
     );
   } catch (error) {
     const errorMessage = (error as Error).message;
